@@ -133,10 +133,10 @@ export function RAGRow({
         <Sparkline dots={row.sparkline} />
       </td>
       <td className="col-action">
-        {onDrillDown && row.drillable !== false && (
-          <button className="link-btn" onClick={() => onDrillDown(row.key)}>
-            {drillLabel} →
-          </button>
+        {onDrillDown && (
+          row.drillable === false
+            ? <span style={{ fontSize: 11, color: 'var(--color-text-muted)', fontStyle: 'italic' }}>No capabilities</span>
+            : <button className="link-btn" onClick={() => onDrillDown(row.key)}>{drillLabel} →</button>
         )}
       </td>
     </tr>

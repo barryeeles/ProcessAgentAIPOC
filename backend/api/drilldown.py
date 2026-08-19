@@ -192,12 +192,12 @@ def get_delivery_view(epic_key: str, week: str | None = Query(None)) -> JSONResp
             rel_sparklines = {}
 
         # ── Capabilities not linked to any release ─────────────────────────
-        # Exclude Backlog/Funnel caps — they are pre-active and should not be flagged
+        # Include all statuses — Backlog/Funnel caps are shown informational-only
+        # (the flow violation rule already skips them so they carry no penalty)
         unassigned_cap_rows = conn.execute(
             "SELECT cap_key, title, status, delivery_increment "
             "FROM capabilities "
             "WHERE epic_key = ? AND in_scope = 1 "
-            "  AND status NOT IN ('Backlog', 'Funnel') "
             "  AND cap_key NOT IN (SELECT cap_key FROM capability_releases)",
             (epic_key,),
         ).fetchall()
