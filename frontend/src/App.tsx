@@ -159,6 +159,7 @@ function App() {
             onSelectRelease={(releaseName) =>
               navRelease(releaseName, view.epicKey, view.epicTitle)
             }
+            onSelectCapability={(capKey) => setOpenCapKey(capKey)}
           />
         )}
 

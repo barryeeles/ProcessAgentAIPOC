@@ -145,7 +145,7 @@ def _feature_kpis(conn, feature: dict) -> dict:
 def get_delivery_view(epic_key: str, week: str | None = Query(None)) -> JSONResponse:
     """
     Delivery Manager view — one row per Release linked to the given EPIC.
-    Each row includes snapshot scores + sparkline.
+    Also returns capabilities that are in scope for the EPIC but not linked to any release.
     """
     with get_connection() as conn:
         epic = conn.execute(
@@ -156,7 +156,10 @@ def get_delivery_view(epic_key: str, week: str | None = Query(None)) -> JSONResp
 
         w = week or _latest_week(conn)
         if not w:
-            return JSONResponse(content={"epic": dict(epic), "week": None, "releases": []})
+            return JSONResponse(content={
+                "epic": dict(epic), "week": None,
+                "releases": [], "unassigned_capabilities": [],
+            })
 
         release_names = [
             r[0]
@@ -166,56 +169,104 @@ def get_delivery_view(epic_key: str, week: str | None = Query(None)) -> JSONResp
             ).fetchall()
         ]
 
-        if not release_names:
-            return JSONResponse(content={
-                "epic": dict(epic),
-                "week": w,
-                "releases": [],
-            })
+        # ── Releases ───────────────────────────────────────────────────────
+        if release_names:
+            ph = ",".join("?" * len(release_names))
+            rel_rows = conn.execute(
+                f"SELECT * FROM releases WHERE release_name IN ({ph}) ORDER BY release_date",
+                release_names,
+            ).fetchall()
 
-        ph = ",".join("?" * len(release_names))
-        rel_rows = conn.execute(
-            f"SELECT * FROM releases WHERE release_name IN ({ph}) ORDER BY release_date",
-            release_names,
+            rel_snaps = {
+                r["entity_key"]: dict(r)
+                for r in conn.execute(
+                    f"SELECT * FROM weekly_snapshots "
+                    f"WHERE entity_key IN ({ph}) AND entity_type='release' AND upload_week=?",
+                    release_names + [w],
+                ).fetchall()
+            }
+            rel_sparklines = _sparklines_for(conn, release_names, "release")
+        else:
+            rel_rows = []
+            rel_snaps = {}
+            rel_sparklines = {}
+
+        # ── Capabilities not linked to any release ─────────────────────────
+        unassigned_cap_rows = conn.execute(
+            "SELECT cap_key, title, status, delivery_increment "
+            "FROM capabilities "
+            "WHERE epic_key = ? AND in_scope = 1 "
+            "  AND cap_key NOT IN (SELECT cap_key FROM capability_releases)",
+            (epic_key,),
         ).fetchall()
 
-        snaps = {
-            r["entity_key"]: dict(r)
-            for r in conn.execute(
-                f"SELECT * FROM weekly_snapshots "
-                f"WHERE entity_key IN ({ph}) AND entity_type='release' AND upload_week=?",
-                release_names + [w],
-            ).fetchall()
-        }
+        unassigned_keys = [r["cap_key"] for r in unassigned_cap_rows]
 
-        sparklines = _sparklines_for(conn, release_names, "release")
+        if unassigned_keys:
+            ph_uc = ",".join("?" * len(unassigned_keys))
+            uc_snaps = {
+                r["entity_key"]: dict(r)
+                for r in conn.execute(
+                    f"SELECT * FROM weekly_snapshots "
+                    f"WHERE entity_key IN ({ph_uc}) AND entity_type='capability' AND upload_week=?",
+                    unassigned_keys + [w],
+                ).fetchall()
+            }
+            uc_sparklines = _sparklines_for(conn, unassigned_keys, "capability")
+            uc_defect_rows = conn.execute(
+                f"SELECT entity_key, rule_set, severity, description "
+                f"FROM dq_defects WHERE upload_week=? AND entity_key IN ({ph_uc})",
+                [w] + unassigned_keys,
+            ).fetchall()
+            uc_defects: dict[str, list] = {}
+            for r in uc_defect_rows:
+                uc_defects.setdefault(r["entity_key"], []).append({
+                    "rule_set": r["rule_set"],
+                    "severity": r["severity"],
+                    "description": r["description"],
+                })
+        else:
+            uc_snaps = {}
+            uc_sparklines = {}
+            uc_defects = {}
 
     releases = []
     for r in rel_rows:
         d = dict(r)
         rn = d["release_name"]
-        snap = snaps.get(rn, {})
-        d["snapshot"] = snap
-        d["sparkline"] = sparklines.get(rn, [None] * 11)
+        d["snapshot"] = rel_snaps.get(rn, {})
+        d["sparkline"] = rel_sparklines.get(rn, [None] * 11)
         releases.append(d)
 
-    # include releases in epic_releases but not in releases table (orphaned links)
+    # Include releases in epic_releases but not in releases table (orphaned links)
     found_names = {r["release_name"] for r in rel_rows}
     for rn in release_names:
         if rn not in found_names:
             releases.append({
-                "release_name": rn,
-                "status": None,
-                "start_date": None,
-                "release_date": None,
-                "snapshot": snaps.get(rn, {}),
-                "sparkline": sparklines.get(rn, [None] * 11),
+                "release_name": rn, "status": None,
+                "start_date": None, "release_date": None,
+                "snapshot": rel_snaps.get(rn, {}),
+                "sparkline": rel_sparklines.get(rn, [None] * 11),
             })
+
+    unassigned_capabilities = [
+        {
+            "cap_key": r["cap_key"],
+            "title": r["title"],
+            "status": r["status"],
+            "delivery_increment": r["delivery_increment"],
+            "snapshot": uc_snaps.get(r["cap_key"], {}),
+            "sparkline": uc_sparklines.get(r["cap_key"], [None] * 11),
+            "dq_defects": uc_defects.get(r["cap_key"], []),
+        }
+        for r in unassigned_cap_rows
+    ]
 
     return JSONResponse(content={
         "epic": dict(epic),
         "week": w,
         "releases": releases,
+        "unassigned_capabilities": unassigned_capabilities,
     })
 
 

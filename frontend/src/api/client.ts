@@ -59,10 +59,21 @@ export interface Release {
   sparkline: (RAG | null)[]
 }
 
+export interface UnassignedCapability {
+  cap_key: string
+  title: string
+  status: string
+  delivery_increment: string | null
+  snapshot: Partial<Snapshot>
+  sparkline: (RAG | null)[]
+  dq_defects: Array<{ rule_set: string; severity: string; description: string }>
+}
+
 export interface DeliveryResponse {
   epic: { epic_key: string; title: string; status: string }
   week: string | null
   releases: Release[]
+  unassigned_capabilities: UnassignedCapability[]
 }
 
 export interface Capability {
