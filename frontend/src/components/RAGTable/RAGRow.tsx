@@ -26,6 +26,8 @@ interface Props {
   onDrillDown?: (key: string) => void
   drillLabel?: string
   dimmed?: boolean
+  hideKey?: boolean
+  hideSubScores?: boolean
 }
 
 function fmt(n: number | null | undefined) {
@@ -61,12 +63,21 @@ function SubScore({
   )
 }
 
-export function RAGRow({ row, onDrillDown, drillLabel = 'Open', dimmed = false }: Props) {
+export function RAGRow({
+  row,
+  onDrillDown,
+  drillLabel = 'Open',
+  dimmed = false,
+  hideKey = false,
+  hideSubScores = false,
+}: Props) {
   return (
     <tr style={{ opacity: dimmed ? 0.55 : 1 }}>
-      <td className="col-key">
-        <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{row.key}</span>
-      </td>
+      {!hideKey && (
+        <td className="col-key">
+          <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{row.key}</span>
+        </td>
+      )}
       <td className="col-title">
         {row.title}
         {!!row.low_confidence && (
@@ -84,25 +95,31 @@ export function RAGRow({ row, onDrillDown, drillLabel = 'Open', dimmed = false }
       <td className="col-score">
         <span className="score-pill">{fmt(row.overall_score)}</span>
       </td>
-      <td className="col-dq">
-        <span className="score-pill score-sub">{fmt(row.dq_score)}</span>
-      </td>
-      <td className="col-flow">
-        <SubScore
-          value={row.flow_score}
-          count={row.flow_cap_count}
-          total={row.cap_total}
-          label="Flow"
-        />
-      </td>
-      <td className="col-kpi">
-        <SubScore
-          value={row.kpi_score}
-          count={row.kpi_cap_count}
-          total={row.cap_total}
-          label="KPI"
-        />
-      </td>
+      {!hideSubScores && (
+        <td className="col-dq">
+          <span className="score-pill score-sub">{fmt(row.dq_score)}</span>
+        </td>
+      )}
+      {!hideSubScores && (
+        <td className="col-flow">
+          <SubScore
+            value={row.flow_score}
+            count={row.flow_cap_count}
+            total={row.cap_total}
+            label="Flow"
+          />
+        </td>
+      )}
+      {!hideSubScores && (
+        <td className="col-kpi">
+          <SubScore
+            value={row.kpi_score}
+            count={row.kpi_cap_count}
+            total={row.cap_total}
+            label="KPI"
+          />
+        </td>
+      )}
       <td className="col-blocked">
         {(row.blocked_count ?? 0) > 0 && (
           <span className="badge badge-R" style={{ fontSize: 10 }}>

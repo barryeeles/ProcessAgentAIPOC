@@ -7,6 +7,8 @@ interface Props {
   showStatus?: boolean
   dimmed?: boolean
   emptyMessage?: string
+  hideKey?: boolean
+  hideSubScores?: boolean
 }
 
 export function RAGTable({
@@ -16,6 +18,8 @@ export function RAGTable({
   showStatus = false,
   dimmed = false,
   emptyMessage = 'No items',
+  hideKey = false,
+  hideSubScores = false,
 }: Props) {
   if (rows.length === 0) {
     return <p className="state-empty">{emptyMessage}</p>
@@ -25,14 +29,14 @@ export function RAGTable({
       <table className="rag-table">
         <thead>
           <tr>
-            <th className="col-key">Key</th>
+            {!hideKey && <th className="col-key">Key</th>}
             <th className="col-title">Title</th>
             {showStatus && <th className="col-status">Status</th>}
             <th className="col-rag">RAG</th>
             <th className="col-score">Score</th>
-            <th className="col-dq">DQ</th>
-            <th className="col-flow">Flow</th>
-            <th className="col-kpi">KPI</th>
+            {!hideSubScores && <th className="col-dq">DQ</th>}
+            {!hideSubScores && <th className="col-flow">Flow</th>}
+            {!hideSubScores && <th className="col-kpi">KPI</th>}
             <th className="col-blocked">Blocked</th>
             <th className="col-trend">Trend (11w)</th>
             <th className="col-action"></th>
@@ -46,6 +50,8 @@ export function RAGTable({
               onDrillDown={onDrillDown}
               drillLabel={drillLabel}
               dimmed={dimmed}
+              hideKey={hideKey}
+              hideSubScores={hideSubScores}
             />
           ))}
         </tbody>

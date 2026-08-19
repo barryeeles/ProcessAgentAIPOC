@@ -109,28 +109,12 @@ export function DeliveryManagerView({ epicKey, week, onSelectRelease, onSelectCa
         onDrillDown={onSelectRelease}
         drillLabel="Capabilities"
         emptyMessage="No releases linked to this EPIC"
+        hideKey
+        hideSubScores
       />
 
       {unassigned.length > 0 && (
         <div style={{ marginTop: 24 }}>
-          {/* Warning banner */}
-          <div style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '10px 14px', marginBottom: 10,
-            background: 'rgba(245,158,11,0.1)',
-            border: '1px solid rgba(245,158,11,0.35)',
-            borderLeft: '4px solid var(--rag-amber)',
-            borderRadius: 6,
-            fontSize: 13,
-          }}>
-            <span style={{ fontWeight: 700, color: 'var(--rag-amber)' }}>DQ</span>
-            <span>
-              <strong>{unassigned.length} capability{unassigned.length > 1 ? 'ies' : 'y'} not assigned to any Release.</strong>
-              {' '}These contribute to EPIC scoring but are invisible in the Release view.
-              Assign a Fix Version in JIRA to resolve.
-            </span>
-          </div>
-
           <div className="section-header" style={{ marginBottom: 6 }}>
             <span className="section-title" style={{ fontSize: 14 }}>
               Capabilities without a Release
