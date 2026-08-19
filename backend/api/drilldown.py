@@ -192,13 +192,27 @@ def get_delivery_view(epic_key: str, week: str | None = Query(None)) -> JSONResp
             rel_sparklines = {}
 
         # ── Capabilities not linked to any release ─────────────────────────
+        # Exclude Backlog/Funnel caps — they are pre-active and should not be flagged
         unassigned_cap_rows = conn.execute(
             "SELECT cap_key, title, status, delivery_increment "
             "FROM capabilities "
             "WHERE epic_key = ? AND in_scope = 1 "
+            "  AND status NOT IN ('Backlog', 'Funnel') "
             "  AND cap_key NOT IN (SELECT cap_key FROM capability_releases)",
             (epic_key,),
         ).fetchall()
+
+        # Capability counts per release (for disabling the drill link on empty releases)
+        if release_names:
+            cap_count_rows = conn.execute(
+                f"SELECT release_name, COUNT(cap_key) as cap_count "
+                f"FROM capability_releases WHERE release_name IN ({ph}) "
+                f"GROUP BY release_name",
+                release_names,
+            ).fetchall()
+            rel_cap_counts = {r["release_name"]: r["cap_count"] for r in cap_count_rows}
+        else:
+            rel_cap_counts = {}
 
         unassigned_keys = [r["cap_key"] for r in unassigned_cap_rows]
 
@@ -236,6 +250,7 @@ def get_delivery_view(epic_key: str, week: str | None = Query(None)) -> JSONResp
         rn = d["release_name"]
         d["snapshot"] = rel_snaps.get(rn, {})
         d["sparkline"] = rel_sparklines.get(rn, [None] * 11)
+        d["cap_count"] = rel_cap_counts.get(rn, 0)
         releases.append(d)
 
     # Include releases in epic_releases but not in releases table (orphaned links)
@@ -247,6 +262,7 @@ def get_delivery_view(epic_key: str, week: str | None = Query(None)) -> JSONResp
                 "start_date": None, "release_date": None,
                 "snapshot": rel_snaps.get(rn, {}),
                 "sparkline": rel_sparklines.get(rn, [None] * 11),
+                "cap_count": rel_cap_counts.get(rn, 0),
             })
 
     unassigned_capabilities = [

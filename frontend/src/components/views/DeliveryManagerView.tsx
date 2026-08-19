@@ -7,19 +7,22 @@ import type { RAGRowData } from '../RAGTable/RAGRow'
 
 function toRowData(r: Release): RAGRowData {
   const s = r.snapshot ?? {}
+  // A release that is no longer UNRELEASED has shipped — treat it as GREEN / 100
+  const isReleased = r.status != null && r.status !== 'UNRELEASED'
   return {
     key: r.release_name,
     title: r.description ?? r.release_name,
-    status: r.status ?? undefined,
-    reported_rag: s.reported_rag ?? null,
-    health_rag: s.health_rag ?? null,
-    overall_score: s.overall_score ?? null,
+    status: isReleased ? 'Released' : (r.status ?? undefined),
+    reported_rag: isReleased ? 'G' : (s.reported_rag ?? null),
+    health_rag: isReleased ? 'G' : (s.health_rag ?? null),
+    overall_score: isReleased ? 100 : (s.overall_score ?? null),
     dq_score: s.dq_score ?? null,
     flow_score: s.flow_score ?? null,
     kpi_score: s.kpi_score ?? null,
-    blocked_count: s.blocked_count ?? null,
+    blocked_count: isReleased ? 0 : (s.blocked_count ?? null),
     low_confidence: s.low_confidence ?? null,
     sparkline: r.sparkline,
+    drillable: r.cap_count > 0,
   }
 }
 

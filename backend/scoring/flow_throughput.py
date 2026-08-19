@@ -114,9 +114,13 @@ def run_flow_throughput(
     for f in features:
         cap_feature_index.setdefault(f["cap_key"], []).append(f)
 
+    _PRE_ACTIVE = frozenset({"Backlog", "Funnel"})
+
     for ck in all_cap_keys:
         if cap_scores[ck] is not None:
             continue  # already scored from active features
+        if cap_statuses.get(ck, "") in _PRE_ACTIVE:
+            continue  # Backlog/Funnel caps are not yet active; no violation applies
         feats = cap_feature_index.get(ck, [])
         if not feats:
             continue  # no features at all; nothing to assess

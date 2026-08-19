@@ -19,6 +19,8 @@ export interface RAGRowData {
   flow_cap_count?: number | null
   kpi_cap_count?: number | null
   sparkline: (RAG | null)[]
+  // when explicitly false, the drill-down button is hidden
+  drillable?: boolean
 }
 
 interface Props {
@@ -131,7 +133,7 @@ export function RAGRow({
         <Sparkline dots={row.sparkline} />
       </td>
       <td className="col-action">
-        {onDrillDown && (
+        {onDrillDown && row.drillable !== false && (
           <button className="link-btn" onClick={() => onDrillDown(row.key)}>
             {drillLabel} →
           </button>

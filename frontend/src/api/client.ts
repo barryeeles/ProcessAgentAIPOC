@@ -57,6 +57,7 @@ export interface Release {
   description: string | null
   snapshot: Partial<Snapshot>
   sparkline: (RAG | null)[]
+  cap_count: number
 }
 
 export interface UnassignedCapability {
