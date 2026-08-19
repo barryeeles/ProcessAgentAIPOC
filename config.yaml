@@ -1,0 +1,179 @@
+scope:
+  epic_key_prefixes: ["FCM", "RN"]
+  capability_key_prefixes: ["FCM", "RN", "FCB"]
+  # EPICs in these statuses are excluded from the active dashboard.
+  # Done/Cancelled/On Hold: formally closed — appear in "Recently Closed" when
+  #   they transition mid-tracking.
+  # Portfolio Funnel: pre-startup, never counted — always fully hidden.
+  epic_terminal_statuses: ["Done", "Cancelled", "On Hold", "Portfolio Funnel"]
+
+fiscal_calendar:
+  start_month: 4  # April — UK fiscal year
+  # Quarter boundaries are computed: Q1=Apr-Jun, Q2=Jul-Sep, Q3=Oct-Dec, Q4=Jan-Mar
+
+thresholds:
+  stagnation_scoping_warning: 10     # days
+  stagnation_scoping_priority: 20
+  stagnation_delivery_warning1: 10
+  stagnation_delivery_warning2: 20
+  stagnation_delivery_alert: 30
+  scoping_budget_days: 60
+  kpi_full_cycle_time_sla: 150       # calendar days
+  kpi_delivery_predictability_sla: 90
+  kpi_delivery_cycle_time_sla: 90
+  kpi_amber_zone_pct: 0.80           # Amber if elapsed >= 80% of SLA
+  rag_green_threshold: 0.85
+  rag_amber_threshold: 0.60
+  delivery_at_risk_horizon_days: 30
+  low_confidence_threshold: 0.50
+  ageing_backlog_days: 365
+  rekey_phantom_weeks: 4
+  high_risk_grace_calendar_months: 1
+  high_risk_penalty_pct: 5.0
+
+weights:
+  data_quality: 0.30
+  flow_throughput: 0.40
+  kpis: 0.30
+
+dq_severity_weights:
+  HIGH: 3
+  MEDIUM: 2
+  WARNING: 1
+
+blocked_penalties:    # % per blocked item, escalating by consecutive weeks
+  FLAGGED: 2.0
+  WARNING: 5.0
+  PRIORITY: 10.0
+  ESCALATE: 15.0
+
+flow_scores:
+  healthy: 100
+  warning1: 70
+  warning2: 50
+  priority_risk: 20
+  high_alert: 20
+  phase_budget_breach: 20
+
+kpi_scores:
+  green: 100
+  amber: 70
+  red: 20
+
+snapshot_history_weeks: 11
+
+feature_workflow_ordinal:
+  - Funnel
+  - In Analysis
+  - PI Backlog
+  - PI Planning
+  - Committed
+  - In Development
+  - Dev Complete
+  - In Testing
+  - Test Complete
+  - Deploying
+  - Deployment Complete
+  - Releasing
+  - Done
+
+legacy_statuses:
+  - Backlog
+  - Deferred
+  - Dev Preparation
+  - Draft
+  - In Review
+  - Ready for Delivery
+  - Release train backlog
+
+status_normalisation:
+  capability:
+    in_delivery_set: ["In Development", "In Testing", "Ready for Delivery"]
+    in_delivery_fix_target: "Ready for Delivery"
+    in_dev_set: ["In Development"]
+    testing_set: ["In Testing"]
+    reviewing_map: "In Review"
+  feature:
+    in_delivery_set: ["In Development", "Dev Complete", "In Testing", "Test Complete",
+                      "Deploying", "Deployment Complete", "Releasing"]
+    in_dev_set: ["In Development", "Dev Complete"]
+    testing_set: ["In Testing", "Test Complete"]
+    deploying_set: ["Deploying", "Deployment Complete", "Releasing"]
+    scoping_set: ["In Analysis", "PI Backlog", "PI Planning"]
+    pre_analysis_set: ["Funnel"]
+
+excel_columns:
+  # ── EPIC.xlsx ──────────────────────────────────────────────────────────
+  epic_sheet: "EPIC"
+  epic_key_col: "EPICKEY"
+  epic_title_col: "Portfolio Epic"
+  epic_status_col: "Status"
+  # Note: EPIC sheet has no Delivery Increment column
+
+  capability_sheet: "Capabilities"
+  capability_key_col: "CapKEY"
+  capability_epic_col: "EPICKey"
+  capability_title_col: "Capability"
+  capability_status_col: "CapStatus"          # actual column name
+  capability_di_col: "Delivery Increment"
+  # Target dates are split across four columns each:
+  capability_target_start_year_col: "Target Start - Year"
+  capability_target_start_month_col: "Target Start - Month"
+  capability_target_start_day_col: "Target Start - Day"
+  capability_target_end_year_col: "Target End - Year"
+  capability_target_end_month_col: "Target End - Month"
+  capability_target_end_day_col: "Target End - Day"
+
+  feature_sheet: "Features"
+  feature_key_col: "FeatureKEY"
+  feature_cap_col: "CapKey"
+  feature_title_col: "Feature"
+  feature_status_col: "Status"
+  feature_di_col: "Delivery Increment"
+  # All date fields are split Year/Quarter/Month/Day:
+  feature_created_year_col: "Created - Year"
+  feature_created_month_col: "Created - Month"
+  feature_created_day_col: "Created - Day"
+  feature_committed_year_col: "DATE_Committed - Year"
+  feature_committed_month_col: "DATE_Committed - Month"
+  feature_committed_day_col: "DATE_Committed - Day"
+  feature_done_year_col: "DATE_Done - Year"
+  feature_done_month_col: "DATE_Done - Month"
+  feature_done_day_col: "DATE_Done - Day"
+  feature_target_start_year_col: "Target Start - Year"
+  feature_target_start_month_col: "Target Start - Month"
+  feature_target_start_day_col: "Target Start - Day"
+  feature_target_end_year_col: "Target End - Year"
+  feature_target_end_month_col: "Target End - Month"
+  feature_target_end_day_col: "Target End - Day"
+
+  epic_transition_sheet: "EPIC Transition"
+  transition_sheet: "Transitions"
+  transition_issue_key_col: "IssueKEY"
+  transition_from_col: "From"
+  transition_to_col: "To"
+  # Transition date is split Year/Quarter/Month/Day (col name: "Created - *")
+  transition_date_year_col: "Created - Year"
+  transition_date_month_col: "Created - Month"
+  transition_date_day_col: "Created - Day"
+
+  art_sheet: "ART"
+  art_issue_key_col: "IssueKey"
+  art_value_col: "Agile Release Train"       # actual column name
+
+  # ── EPIC_Releases.xlsx ────────────────────────────────────────────────
+  epic_releases_sheet: "EPIC Releases"
+  epic_releases_key_col: "Key"               # actual column name
+  epic_releases_fixversions_col: "Fix versions"
+
+  capability_releases_sheet: "Capability Releases"
+  capability_releases_key_col: "Key"         # actual column name
+  capability_releases_fixversions_col: "Fix versions"
+
+  all_unreleased_sheet: "ALL UNRELEASED"
+  release_name_col: "Release"               # actual column name
+  release_status_col: "Status"
+  release_start_date_col: "Start date"
+  release_release_date_col: "Release date"
+  release_progress_col: "Progress"
+  release_description_col: "Description"

@@ -1,0 +1,13 @@
+.sparkline {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.sparkline-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,.08);
+  flex-shrink: 0;
+}

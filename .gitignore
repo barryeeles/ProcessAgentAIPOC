@@ -1,0 +1,21 @@
+# Data files — not versioned
+data/
+*.xlsx
+*.xls
+
+# Logs
+*.log
+
+# Python
+backend/.venv/
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Node / frontend build
+frontend/node_modules/
+frontend/dist/
+
+# Claude Code session files
+.claude/
