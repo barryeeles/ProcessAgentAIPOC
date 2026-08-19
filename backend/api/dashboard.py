@@ -170,6 +170,46 @@ def get_scope_summary() -> JSONResponse:
     })
 
 
+# ── Blocked items (SLT-level callout) ─────────────────────────────────────
+
+_STAGE_RANK = {"ESCALATE": 4, "PRIORITY": 3, "WARNING": 2, "FLAGGED": 1}
+
+@router.get("/blocked")
+def get_blocked(week: str | None = Query(None)) -> JSONResponse:
+    """All blocked items for the week with EPIC/cap/feature context, ordered by severity."""
+    with get_connection() as conn:
+        w = week or _latest_week(conn)
+        if not w:
+            return JSONResponse(content={"week": None, "items": []})
+
+        rows = conn.execute(
+            """
+            SELECT
+                bi.feature_key, bi.weeks_consecutive, bi.stage, bi.di_band, bi.penalty_pct,
+                f.title      AS feature_title,
+                c.cap_key, c.title AS cap_title,
+                e.epic_key,  e.title AS epic_title
+            FROM blocked_items bi
+            JOIN features     f ON f.feature_key = bi.feature_key
+            JOIN capabilities c ON c.cap_key      = f.cap_key
+            JOIN epics        e ON e.epic_key      = c.epic_key
+            WHERE bi.upload_week = ?
+            ORDER BY
+                CASE bi.stage
+                    WHEN 'ESCALATE' THEN 4 WHEN 'PRIORITY' THEN 3
+                    WHEN 'WARNING'  THEN 2 ELSE 1
+                END DESC,
+                bi.weeks_consecutive DESC
+            """,
+            (w,),
+        ).fetchall()
+
+    return JSONResponse(content={
+        "week": w,
+        "items": [dict(r) for r in rows],
+    })
+
+
 # ── Metadata ───────────────────────────────────────────────────────────────
 
 @router.get("/metadata")

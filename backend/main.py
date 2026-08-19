@@ -15,6 +15,7 @@ from database import init_db
 from api.upload import router as upload_router
 from api.dashboard import router as dashboard_router
 from api.drilldown import router as drilldown_router
+from api.checklist import router as checklist_router
 
 app = FastAPI(title="Process Evaluation Agent", version="0.1.0")
 
@@ -31,6 +32,7 @@ app.add_middleware(
 app.include_router(upload_router, prefix="/api")
 app.include_router(dashboard_router, prefix="/api")
 app.include_router(drilldown_router, prefix="/api")
+app.include_router(checklist_router, prefix="/api")
 
 # Serve built React app (Phase 3+; skip if not built yet)
 _FRONTEND_BUILD = Path(__file__).parent.parent / "frontend" / "dist"

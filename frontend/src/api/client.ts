@@ -182,6 +182,46 @@ export interface FeatureDetail {
   dq_defects: DqDefect[]
 }
 
+export interface BlockedItemFull extends BlockedItem {
+  feature_title: string
+  cap_key: string
+  cap_title: string
+  epic_key: string
+  epic_title: string
+}
+
+export interface BlockedResponse {
+  week: string | null
+  items: BlockedItemFull[]
+}
+
+export interface ChecklistDefect {
+  id: number
+  upload_week: string
+  entity_key: string
+  entity_type: string
+  rule_set: string
+  severity: 'HIGH' | 'MEDIUM' | 'WARNING'
+  description: string
+  scoring_attribution: string
+  first_seen_week: string | null
+  required_action: string | null
+  narration: string | null
+}
+
+export interface ChecklistSection {
+  section: string
+  title: string
+  count: number
+  defects: ChecklistDefect[]
+}
+
+export interface ChecklistResponse {
+  week: string | null
+  sections: ChecklistSection[]
+  total: number
+}
+
 export interface ScopeSummary {
   epics: {
     total: number
@@ -240,6 +280,20 @@ export const api = {
 
   feature: (key: string, week?: string) =>
     get<FeatureDetail>(`/api/feature/${key}${week ? `?week=${week}` : ''}`),
+
+  blocked: (week?: string) =>
+    get<BlockedResponse>(`/api/blocked${week ? `?week=${week}` : ''}`),
+
+  checklist: (week?: string, epicKey?: string) => {
+    const params = new URLSearchParams()
+    if (week) params.set('week', week)
+    if (epicKey) params.set('epic_key', epicKey)
+    const qs = params.toString()
+    return get<ChecklistResponse>(`/api/checklist${qs ? `?${qs}` : ''}`)
+  },
+
+  checklistExportUrl: (week?: string) =>
+    `/api/checklist/export${week ? `?week=${week}` : ''}`,
 
   scopeSummary: () => get<ScopeSummary>('/api/scope-summary'),
 

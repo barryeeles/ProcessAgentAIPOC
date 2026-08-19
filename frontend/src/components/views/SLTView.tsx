@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
-import { api, type EpicRow, type SltResponse } from '../../api/client'
+import { api, type EpicRow, type SltResponse, type BlockedItemFull } from '../../api/client'
 import { RAGTable } from '../RAGTable/RAGTable'
 import type { RAGRowData } from '../RAGTable/RAGRow'
+import { BlockedCallout } from '../BlockedCallout'
 
 function toRowData(e: EpicRow): RAGRowData {
   return {
@@ -31,11 +32,13 @@ interface Props {
 export function SLTView({ week, onSelectEpic }: Props) {
   const [data, setData] = useState<SltResponse | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [blocked, setBlocked] = useState<BlockedItemFull[]>([])
 
   useEffect(() => {
     setData(null)
     setError(null)
     api.slt(week).then(setData).catch((e: Error) => setError(e.message))
+    api.blocked(week).then(r => setBlocked(r.items)).catch(() => setBlocked([]))
   }, [week])
 
   if (error) return <div className="state-error">{error}</div>
@@ -50,6 +53,12 @@ export function SLTView({ week, onSelectEpic }: Props) {
         <h2 className="section-title">Active EPICs</h2>
         <span className="section-count">{activeRows.length} EPICs · week {data.week}</span>
       </div>
+
+      <BlockedCallout
+        items={blocked.filter(b => b.stage === 'ESCALATE' || b.stage === 'PRIORITY')}
+        showEpic
+        showCap
+      />
 
       <RAGTable
         rows={activeRows}

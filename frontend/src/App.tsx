@@ -4,6 +4,9 @@ import { SLTView } from './components/views/SLTView'
 import { DeliveryManagerView } from './components/views/DeliveryManagerView'
 import { ReleaseManagerView } from './components/views/ReleaseManagerView'
 import { FileUpload } from './components/FileUpload'
+import { CapabilityPanel } from './components/CapabilityPanel'
+import { TransparencyPanel } from './components/TransparencyPanel'
+import { CleanupChecklist } from './components/CleanupChecklist'
 import './index.css'
 
 // ── Navigation state ─────────────────────────────────────────────────────
@@ -11,6 +14,7 @@ type View =
   | { type: 'slt' }
   | { type: 'delivery'; epicKey: string; epicTitle?: string }
   | { type: 'release'; releaseName: string; epicKey: string; epicTitle?: string }
+  | { type: 'checklist' }
   | { type: 'upload' }
 
 function App() {
@@ -18,6 +22,8 @@ function App() {
   const [selectedWeek, setSelectedWeek] = useState<string | undefined>(undefined)
   const [metadata, setMetadata] = useState<Metadata | null>(null)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [openCapKey, setOpenCapKey] = useState<string | null>(null)
+  const [showTransparency, setShowTransparency] = useState(false)
 
   useEffect(() => {
     api.metadata().then(setMetadata).catch(() => null)
@@ -43,7 +49,7 @@ function App() {
 
   // ── Breadcrumb ──────────────────────────────────────────────────────────
   function Breadcrumb() {
-    if (view.type === 'slt') return null
+    if (view.type === 'slt' || view.type === 'upload' || view.type === 'checklist') return null
     return (
       <nav className="breadcrumb">
         <button className="link-btn" onClick={navSlt}>SLT</button>
@@ -106,6 +112,20 @@ function App() {
         <button
           className="btn"
           style={{ background: 'rgba(255,255,255,.15)', color: '#fff', border: '1px solid rgba(255,255,255,.3)' }}
+          onClick={() => setView({ type: 'checklist' })}
+        >
+          Checklist
+        </button>
+        <button
+          className="btn"
+          style={{ background: 'rgba(255,255,255,.15)', color: '#fff', border: '1px solid rgba(255,255,255,.3)' }}
+          onClick={() => setShowTransparency(t => !t)}
+        >
+          ℹ Scope
+        </button>
+        <button
+          className="btn"
+          style={{ background: 'rgba(255,255,255,.15)', color: '#fff', border: '1px solid rgba(255,255,255,.3)' }}
           onClick={() => setView({ type: 'upload' })}
         >
           Upload
@@ -146,13 +166,31 @@ function App() {
           <ReleaseManagerView
             releaseName={view.releaseName}
             week={selectedWeek}
-            onSelectCapability={(capKey) => {
-              // Phase 4: open capability detail panel/modal
-              alert(`Capability detail for ${capKey} — coming in Phase 4`)
-            }}
+            onSelectCapability={(capKey) => setOpenCapKey(capKey)}
           />
         )}
+
+        {view.type === 'checklist' && (
+          <CleanupChecklist week={selectedWeek} />
+        )}
       </main>
+
+      {/* Capability slide-over panel */}
+      {openCapKey && (
+        <CapabilityPanel
+          capKey={openCapKey}
+          week={selectedWeek}
+          onClose={() => setOpenCapKey(null)}
+        />
+      )}
+
+      {/* Transparency sidebar */}
+      {showTransparency && (
+        <TransparencyPanel
+          metadata={metadata}
+          onClose={() => setShowTransparency(false)}
+        />
+      )}
     </div>
   )
 }
